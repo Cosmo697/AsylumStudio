@@ -15,14 +15,21 @@ export default function IcecastPlayer() {
   const [volume, setVolume] = useState(0.25)
   const [isMuted, setIsMuted] = useState(false)
   const [nowPlaying, setNowPlaying] = useState<NowPlaying | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
     const fetchNowPlaying = async () => {
+      setIsLoading(true)
       try {
         const data = await getNowPlaying()
+        if (!data) {
+          throw new Error("No data received from API")
+        }
         setNowPlaying(data)
       } catch (error) {
         console.error("Failed to fetch now playing data:", error)
+      } finally {
+        setIsLoading(false)
       }
     }
 
@@ -69,7 +76,9 @@ export default function IcecastPlayer() {
       <h2 className="text-xl sm:text-2xl font-bold mb-4 text-center text-[#ff00ff]">Asylum Studio Radio</h2>
       <audio ref={audioRef} src={STREAM_URL} />
 
-      {nowPlaying && (
+      {isLoading ? (
+        <p className="text-center">Loading...</p>
+      ) : nowPlaying ? (
         <div className="mb-4">
           <img
             src={nowPlaying.now_playing.song.art || "/placeholder.svg?height=256&width=256"}
@@ -79,6 +88,8 @@ export default function IcecastPlayer() {
           <p className="text-base sm:text-lg font-semibold text-[#ff00ff]">{nowPlaying.now_playing.song.title}</p>
           <p className="text-sm sm:text-md text-gray-400">{nowPlaying.now_playing.song.artist}</p>
         </div>
+      ) : (
+        <p className="text-center">Unable to load track information</p>
       )}
 
       <div className="flex items-center justify-between mb-4 gap-2">
